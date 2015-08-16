@@ -4,7 +4,7 @@
 // @description Hide Forum Threads - Hides threads in Vbulletin boards. 4CDM - 4C downloads manager
 // @include http://www.4clubbers.com.pl/*
 // @run-at document-end
-// @grant        none
+
 // ==/UserScript==
 
 //*************global variables
