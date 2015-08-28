@@ -1,4 +1,6 @@
 <?php
+		header('Access-Control-Allow-Origin: http://www.4clubbers.com.pl');
+
 		//addData();
 		//function addData()
 		{
@@ -32,4 +34,3 @@
 		echo "window.close();";
 		echo "</script>";
 ?>
-	

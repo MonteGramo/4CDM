@@ -8,16 +8,15 @@
 				
 		$result = mysql_query("DELETE FROM playlist WHERE id=".$number."");
 	
-		printf($result);
-	}
+		if ($result == "1")
+		{
+			printf("USNIETO");	
+		}
+		else
+		{
+			printf("ERROR - ". $result);
+		}	
+}
 	
 		
-		
-		
-		printf("poszlo");
-		
-		echo  "<script type='text/javascript'>";
-		echo "window.close();";
-		echo "</script>";
 ?>
-	

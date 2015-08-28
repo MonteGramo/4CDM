@@ -4,6 +4,7 @@
 // @description Hide Forum Threads - Hides threads in Vbulletin boards. 4CDM - 4C downloads manager
 // @include http://www.4clubbers.com.pl/*
 // @run-at document-end
+// @require http://code.jquery.com/jquery-latest.js
 
 // ==/UserScript==
 
@@ -95,6 +96,7 @@ node.parentNode.removeChild(node);
 }
 }
 }
+
 /*
 function search()
 	{
@@ -123,121 +125,252 @@ function search()
 filterThreads();
 //search();
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-function lookfor()
+init();
+
+function init()
 {
-       var players = document.getElementsByClassName("zippyshare-player-content");
+	createDownloadButton();
+	createTestButton();
+	
+	var page = $('link[rel="canonical"]').attr("href");		// aktualny link strony
+	
+	console.log("Aktualny link strony: " + page)
+	
+	if ( page.indexOf("http://www.4clubbers.com.pl/electro-electro-house") > -1 )
+	{
+		lookForThreads();	
+		// Modyfikuje linki tematow do otwierania na 
+		// nowych kartach i automatycznego ukrywania po kliku
+	}
+	else
+	{
+		lookForPlayers(document);	
+		// jesli otwarty temat szuka odtwarzaczy i wysyla na serwer
+	}
+}
+
+function lookForThreads()
+{
+	var tbody = document.getElementById("threadbits_forum_139");
     
-       //alert("Wykryto playerow w ilosci: " + players.length);
-       //alert(players[0]);
-       if( players.length != 0 )
+	var rows = tbody.getElementsByTagName("tr");
+	
+	var threadLinks = $('a[id^="thread_title_"]');
+	
+	for (var i = 0; i < rows.length ; i++)
+	{
+		
+		var td = rows[i].getElementsByTagName("td")[2];
+				
+		var div1 = td.getElementsByTagName("div")[0];
+		var a1 = div1.getElementsByTagName("a")[0];                                
+		
+		//alert(links[4].attr();
+		/*
+		var div2 = td.getElementsByTagName("div")[2]; 
+		var a2 = div2.getElementsByTagName("a")[0];
+		*/
+	
+		threadLinks[i].setAttribute("target", "_blank");
+		threadLinks[i].setAttribute("onclick", a1.getAttribute("href"));
+	}
+}
+
+function lookForPlayers(page)
+{
+       var players = page.getElementsByClassName("zippyshare-player-content");
+    
+       console.log("Wykryto odtwarzaczy: " + players.length);
+
+       if ( players.length != 0 )
        {
-             for ( var i = 0; i < players.length ; i += 1)
+            for ( var i = 0; i < players.length ; i += 1 )
             {
-           players[i].getElementsByClassName("zippyshare-player-block-download")[0].remove();
-           players[i].getElementsByClassName("zippyshare-player-limit")[0].remove();
-    
-           var downloads = players[i].getElementsByTagName("span")[1].innerHTML;
-    
-           downloads = downloads.split(":")[1];
-      
-           var player = players[i].getElementsByTagName("div")[0];
-    
-           player = player.getElementsByTagName("object")[0].innerHTML;
-       //player = player.getElementsByTagName("embed")[0].innerHTML;
+				players[i].getElementsByClassName("zippyshare-player-block-download")[0].remove();
+				players[i].getElementsByClassName("zippyshare-player-limit")[0].remove();
+			
+				var downloads = players[i].getElementsByTagName("span")[1].innerHTML;
+			
+				downloads = downloads.split(":")[1];		
+				downloads = downloads.replace("<b>","");
+				downloads = downloads.replace("</b>","");	// ILOSC POBRAN
+			
+				var player = players[i].getElementsByTagName("div")[0];		
+			
+				player = player.getElementsByTagName("object")[0].innerHTML; // ODTWARZACZ
 
-       //alert(player);
-    
-           var str = 'http://pmich.hol.es/get_data.php?d1=' + player;
-
-           str = str.replace(/&amp/g,'^^%%^^');
-           str = str.replace(/#/g,'^%^');
-    
-           var tab = window.open( str + '&d2=' + downloads, '_blank');
-       //tab.document.body.innerHTML = "<table><tr><td>" + player + "</td><td>" + downloads + "</td>";
-       //tab.document.head.innerHTML = "<title>4CDM</title>";
-                
+				sendDataToServer(player, downloads);	// wyslij do pmich.hol.es
             }
-           window.close();
-       }
-       else
-       {
-           var tbody = document.getElementById("threadbits_forum_139");
-    
-           var rows = tbody.getElementsByTagName("tr");
-           
-           var links = $('a[id^="thread_title_"]');
-           
-           for (var i = 0; i < rows.length ; i++)
-           {
-               
-               var td = rows[i].getElementsByTagName("td")[2];
-                    
-               var div1 = td.getElementsByTagName("div")[0];
-               var a1 = div1.getElementsByTagName("a")[0];                                
-               
-               //alert(links[4].attr();
-               /*
-               var div2 = td.getElementsByTagName("div")[2]; 
-               var a2 = div2.getElementsByTagName("a")[0];
-               */
-
-               links[i].setAttribute("target", "_blank");
-               links[i].setAttribute("onclick", a1.getAttribute("href"));
-
-           }
-           
-           
-       }
+			//window.close();
+	   }
     
 }
 
-lookfor();
+function sendDataToServer(player, downloads)
+{
+	player = player.replace(/&amp/g,'^^%%^^');
+	player = player.replace(/#/g,'^%^');
+	
+	// przez &amp i # noramlnie nie wysyla
+	
+	var server = 'http://pmich.hol.es/get_data.php';		
+	
+	var filledServerLink = server + '?d1=' + player + '&d2=' + downloads;
+	
+	//console.log("filledServerLink: " + filledServerLink);
+	
+	var xmlHttpServer = new XMLHttpRequest();
+	xmlHttpServer.open('GET', filledServerLink , true);
+	xmlHttpServer.send(null);      
+	
+	console.log("-----------------------------------------------");
+} 
 
+function createDownloadButton()
+{
+    var div = document.createElement("div");
+    div.setAttribute("style", "width: 100px; height: 50px; position: fixed; background-color: #F4F4F4; text-align: center; display: table;");   
+    div.setAttribute("class", "navbar");
+    var a = document.createElement("a");
+    a.setAttribute("style", "font-weight: bold; font: bold 16px verdana, geneva, lucida, 'lucida grande', arial, helvetica, sans-serif; margin-top: 50%; height: 100px; display: table-cell; vertical-align: middle;");
+    a.innerHTML = "POBIERZ 10";
+    a.setAttribute("href" , "javascript:void(0);");
+	a.setAttribute("class", "downloadButton");
+	
+    div.appendChild(a);
+    
+    document.body.insertBefore(div,document.body.firstChild);
+			
+	var link = $( '.downloadButton' );
+    link.on("click", function(){ downloadPack(10); });
+}
+
+function createTestButton()
+{
+	var div = document.createElement("div");
+    div.setAttribute("style", "width: 100px; height: 50px; position: fixed; background-color: #F4F4F4; text-align: center; display: table; margin-top: 100px;");   
+    div.setAttribute("class", "navbar");
+    var a = document.createElement("a");
+    a.setAttribute("style", "font-weight: bold; font: bold 16px verdana, geneva, lucida, 'lucida grande', arial, helvetica, sans-serif; margin-top: 50%; height: 100px; display: table-cell; vertical-align: middle;");
+    a.innerHTML = "TESTUJ";
+    a.setAttribute("href" , "javascript:void(0);");
+	a.setAttribute("class", "testButton");
+    
+    div.appendChild(a);
+    
+    document.body.insertBefore(div,document.body.firstChild);	
+	 
+	var link = $( '.testButton');
+    link.on("click", function(){ downloadPack(1); });
+}
+
+
+function downloadPack(numberOfThreads)
+{   
+	var threadLinks = $('a[id^="thread_title_"]');
+	
+	console.log("Wykryto watki: " + threadLinks.length)
+	
+	if (threadLinks.length < numberOfThreads)
+    {
+        for (var i = 0; i < threadLinks.length ; i++)
+        {
+			processSingleThread(threadLinks[i]);
+			
+			//////////////////////////////////////////////////////////////////////////
+			
+			threadLinks[i].setAttribute("href", "javascript:void(0)");	
+			threadLinks[i].click();
+		
+			console.log("Usunieto watek. Pozostalo " + (--threadLinks.length));
+			
+			//////////////////////////////////////////////////////////////////////////
+			//DO POPRAWKI
+            
+            //Sleep(3000);
+		}
+    }
+	else if (threadLinks.length == 0)
+	{
+		alert("Brak tematow");
+	}
+    else 
+    {
+        for (var i = 0; i < numberOfThreads ; i++)
+        {
+			processSingleThread(threadLinks[i]);
+			
+			//////////////////////////////////////////////////////////////////////////
+			
+			threadLinks[i].setAttribute("href", "javascript:void(0)");	
+			threadLinks[i].click();
+		
+			console.log("Usunieto watek. Pozostalo " + (--threadLinks.length));
+			
+			//////////////////////////////////////////////////////////////////////////
+			//DO POPRAWKI
+            
+            //Sleep(3000);
+        }
+    }	
+}
+/*
+function deleteRow()
+{
+	var threadLinks = $('a[id^="thread_title_"]');
+	
+	if(threadLinks.length > 0)
+	{
+		threadLinks[0].setAttribute("href", "javascript:void(0)");
+		threadLinks[0].click();
+		
+		console.log("Usunieto watek. Pozostalo " + (--threadLinks.length));
+	}
+}
+*/
+// DO POPRWAKI - Potwierdzanie ze dobrze wyslalo i dopiero usuwa
+
+function processSingleThread(threadLink)
+{	
+    var xmlHttpSite = new XMLHttpRequest();
+    
+	if (xmlHttpSite.readyState == 0 || xmlHttpSite.readyState == 4)
+	{
+		console.log("threadLink: " + threadLink);
+		
+		xmlHttpSite.open('GET', threadLink);
+        xmlHttpSite.onreadystatechange = function(){ handleResponse( xmlHttpSite ); };
+		xmlHttpSite.responseType = "document";
+		xmlHttpSite.send(null);	
+	}
+	else
+    {
+		setTimeout(function(){ processSingleThread(threadLink); }, 1000);
+	}	
+}
+
+function handleResponse(xmlHttpSite)
+{
+	if (xmlHttpSite.readyState == 4)
+	{
+		if (xmlHttpSite.status == 200)
+		{
+			console.log("Respond statusText: " + xmlHttpSite.statusText);
+			
+			xmlResponse = xmlHttpSite.responseXML;
+			
+			lookForPlayers(xmlResponse);
+		}
+	}	
+	
+}
+/*
 var script = document.createElement('script'); 
 script.type = "text/javascript"; 
 script.innerHTML = (<><![CDATA[
-
-function downloadPack()
-{
-    //var tbody = document.getElementById("threadbits_forum_139");
-    
-    //var rows = tbody.getElementsByTagName("tr");
-    
-    var links = $('a[id^="thread_title_"]');
-    
-    if ( links.length < 10 )
-    {
-         for (var i = 0; i < links.length ; i++)
-         {
-             links[i].click();
-         }
-    }
-    else
-    {
-         for (var i = 0; i < 10 ; i++)
-         {
-             links[i].click();
-         }
-    }
-}
 ]]></>).toString();
-document.getElementsByTagName('head')[0].appendChild(script);
-    
-function buttondiv()
-{
-        var div = document.createElement("div");
-        div.setAttribute("style", "width: 100px; height: 50px; position: fixed; background-color: #F4F4F4; text-align: center; display: table;");   
-    div.setAttribute("class", "navbar");
-        var a = document.createElement("a");
-    a.setAttribute("style", "font-weight: bold; font: bold 16px verdana, geneva, lucida, 'lucida grande', arial, helvetica, sans-serif; margin-top: 50%; height: 100px; display: table-cell; vertical-align: middle;");
-        a.innerHTML = "POBIERZ 10";
-        a.setAttribute("href" , "javascript:downloadPack();");
-    
-        div.appendChild(a);
-    
-        document.body.insertBefore(div,document.body.firstChild);
-}
-
-
-buttondiv();
+document.getElementsByTagName('head')[0].appendChild(script);*/

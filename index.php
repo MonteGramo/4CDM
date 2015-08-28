@@ -74,6 +74,52 @@
 				color: white;
 			}
 		</style>
+		<script type="text/javascript">
+			var xmlhttp;
+		
+			function deleteRow(thisElement, number)
+			{
+				thisElement.parentNode.parentNode.remove();
+				
+				xmlhttp = new XMLHttpRequest();
+				
+				process(number);	
+			}
+			
+			function process(number)
+			{
+				if (xmlhttp.readyState == 0 || xmlhttp.readyState == 4)
+				{
+					xmlhttp.open('GET', 'delete.php?d1=' + number);
+					xmlhttp.onreadystatechange = handleResponse;
+					xmlhttp.responseType = "document"
+					xmlhttp.send(null);
+				}
+				else
+				{
+					setTimeout('process('+number+')', 1000);
+				}	
+			}
+			
+			function handleResponse()
+			{
+				if (xmlhttp.readyState == 4)
+				{
+					if (xmlhttp.status == 200)
+					{
+						xmlResponse = xmlhttp.responseXML;
+						//xmlDocumentElement = xmlResponse.documentResponse;
+						//message = xmlDocumentElement.firstChild.data;
+						
+						//alert(xmlhttp.responseXML.body.innerHTML);
+						
+						//alert("Status - " + xmlhttp.status + " - StatusText - " + xmlhttp.readyState);
+					}
+				}
+				
+				
+			}
+		</script>
 	<head>
 	<body>
 		<center>
@@ -111,7 +157,7 @@
 					<tr>
 						<td>".$tmp0."</td>
 						<td>".$record[1]."</td>		
-						<td><a href='delete.php?d1=".$record[2]."' onclick='this.parentNode.parentNode.remove()' target='_blank'>USUN</a></td>
+						<td><a href='javascript:void(0);' onclick='deleteRow(this, ".$record[2].");' target='_blank'>USUN</a></td>
 					</tr>";
 					
 				
